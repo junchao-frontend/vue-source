@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Untitled Document</title>
+</head>
+
+<body>
+    <ul id="u">
+        <li id="li1" title="hello">Magci</li>
+        <li>J2EE</li>
+        <li>Haha!</li>
+    </ul>
+    <input type="button" value="Change" onClick="change();" />
+    <script language="JavaScript">
+        function change() {
+            undefined
+            var input = document.getElementById("li1");
+            alert(input.getAttribute("title"));
+            input.setAttribute("title", "mgc");
+            alert(input.getAttribute("title"));
+        }
+    </script>
+</body>
+
+</html>

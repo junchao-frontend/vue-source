@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JCVue</title>
+</head>
+
+<body>
+  <div id="root">
+    <div class="c1">
+      <div title="tt1" id="id">{{ name }}</div>
+      <div title="tt2">{{ age }}</div>
+      <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    /** 虚拟DOM类 */
+    class VNode {
+      constructor(tag, data, value, type) {
+        this.tag = tag && tag.toLowerCase();
+        this.data = data;
+        this.value = value;
+        this.type = type;
+        this.children = [];
+      }
+
+      appendChild(vnode) {
+        this.children.push(vnode);
+      }
+    }
+    /** 生成虚拟DOM函数 */
+    function getVNode(node) {
+      let nodeType = node.nodeType;
+      let _vnode = null;
+      if (nodeType === 1) {
+        // 元素
+        let nodeName = node.nodeName;
+        let attrs = node.attributes; // 属性节点
+        // console.log(attrs);
+        let _attrObj = {};
+        for (let i = 0; i < attrs.length; i++) { // attrs[ i ] 属性节点 ( nodeType == 2 )
+          _attrObj[attrs[i].nodeName] = attrs[i].nodeValue;
+        }
+        _vnode = new VNode(nodeName, _attrObj, undefined, nodeType);
+
+        // 考虑 node 的子元素
+        let childNodes = node.childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+          _vnode.appendChild(getVNode(childNodes[i])); // 递归
+        }
+
+      } else if (nodeType === 3) {
+
+        _vnode = new VNode(undefined, undefined, node.nodeValue, nodeType);
+      }
+
+      return _vnode;
+    }
+
+
+    let rkuohao = /\{\{(.+?)\}\}/g;
+    /** 根据路径 访问对象成员 */
+    function getValueByPath(obj, path) {
+      let paths = path.split('.'); // [ xxx, yyy, zzz ]
+      let res = obj;
+      let prop;
+      while (prop = paths.shift()) {
+        res = res[prop];
+      }
+      return res;
+    }
+
+    /** 将有坑的虚拟DOM和数据结合起来 */
+    function combine(vnode, data) {
+      let _type = vnode.type;
+      let _data = vnode.data;
+      let _value = vnode.value;
+      let _tag = vnode.tag;
+      let _children = vnode.children;
+
+      let _vnode = null;
+
+      if (_type === 3) {
+        // 文本节点
+        _value = _value.replace(rkuohao, function (_, g) {
+          return getValueByPath(data, g.trim());
+        })
+        _vnode = new VNode(_tag, _data, _value, _type)
+      } else if (_type === 1) {
+        _vnode = new VNode(_tag, _data, _value, _type);
+        _children.forEach(subvnode => {
+          _vnode.appendChild(combine(subvnode, data))
+        })
+      }
+
+      return _vnode;
+    }
+    function JCVue(optios) {
+      this._data = optios.data
+      this._template = document.querySelector(optios.el)
+      this.mount(); // 挂载
+    }
+
+    JCVue.prototype.mount = function () {
+      // 需要提供一个 render 方法: 生成 虚拟 DOM
+      this.render = this.createRenderFn()
+      this.createRenderFn()
+      this.mountComponent();
+    }
+
+    JCVue.prototype.mountComponent = function () {
+      // 执行 mountComponent() 函数 
+      // let tmp = this.render()
+      // console.log(tmp);
+      let mount = () => {
+        this.update(this.render())
+      }
+      // mount.call( this ); // 本质应该交给 watcher 来调用, 但是还没有讲到这里
+      mount()
+    }
+
+
+    // 这里是生成 render 函数, 目的是缓存 抽象语法树 ( 我们使用 虚拟 DOM 来模拟 )
+    JCVue.prototype.createRenderFn = function () {
+      let ast = getVNode(this._template)
+      // console.log(ast); ast是有坑的虚拟DOM
+      // Vue: 将 AST + data => VNode
+      // 我们: 带有坑的 VNode + data => 含有数据的 VNode
+      return function render() {
+        // 将有坑的虚拟DOM和数据结合起来
+        let _tmp = combine(ast, this._data);
+        // debugger;
+        return _tmp;
+      }
+    }
+    // 将虚拟 DOM 渲染到页面中: diff 算法就在里
+    JCVue.prototype.update = function (vnode) {
+      // 简化, 直接生成 HTML DOM replaceChild 到页面中
+      function parseVNode(vnode) {
+        // console.log(vnode);
+        let type = vnode.type;
+        let _node = null;
+        if (type == 1) {
+          // 创建节点
+          _node = document.createElement(vnode.tag);
+          // 绑定属性
+          let data = vnode.data
+          Object.keys(data).forEach(key => {
+            let attributename = key
+            let attributevalue = data[key]
+            _node.setAttribute(attributename, attributevalue); // setAttribute() 方法添加指定的属性，并为其赋指定的值
+          });
+          // 子元素
+          let children = vnode.children;
+          children.forEach(subvnode => {
+            _node.appendChild(parseVNode(subvnode)) // 递归子元素
+          })
+        } else if (type == 3) {
+          return document.createTextNode(vnode.value) // 创建文本节点
+        }
+        return _node;
+      }
+      let node = parseVNode(vnode)
+      let parentNode = document.getElementById(this._template.id).parentNode
+      parentNode.replaceChild(node, document.getElementById(this._template.id))
+    }
+
+
+
+    let app = new JCVue({
+      el: '#root',
+      data: {
+        name: '王军潮',
+        age: 20
+      }
+    })
+  </script>
+</body>
+
+</html>

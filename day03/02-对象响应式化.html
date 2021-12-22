@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+
+    <body>
+        <script>
+            let data = {
+                name: '王军潮',
+                age: 20,
+                course: [
+                    { name: '123' },
+                    { age: 456 },
+                    [{
+                        test: '111'
+                    }]
+                ]
+            }
+
+            function defineReactive(target, key, value, enumerable) {
+                // 函数内部就是一个局部作用域, 这个 value 就只在函数内使用的变量 ( 闭包 )
+                if (typeof value === 'object' && value != null && !Array.isArray(value)) {
+                    // 是非数组的引用类型
+                    reactify(value) // 递归
+                }
+                Object.defineProperty(target, key, {
+                    configurable: true,
+                    enumerable: !!enumerable,
+
+                    get() {
+                        return value;
+                    },
+                    set(newVal) {
+                        value = newVal
+                    }
+                })
+            }
+
+            function reactify(obj) {
+                let keys = Object.keys(obj)
+                for (let i = 0; i < keys.length; i++) {
+                    let key = keys[i]
+                    let value = obj[key]
+                    // 判断每一项是对象还是数组还是数据
+                    if (Array.isArray(value)) {
+                        // 数组
+                        for (let j = 0; j < value.length; j++) {
+                            reactify(value[j])
+                        }
+                    } else {
+                        // 对象或者类型
+                        defineReactive(obj, key, value, true);
+                    }
+                }
+            }
+            reactify(data)
+        </script>
+    </body>
+
+    </html>
+</body>
+
+</html>

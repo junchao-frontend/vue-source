@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="root">
+        <div><span>{{name}}</span></div>
+        <p>{{message}}</p>
+    </div>
+    <script>
+        // console.log(root);
+        let rkuohao = /\{\{(.+?)\}\}/g;
+        // 拿到模板
+        let tmpNode = document.querySelector('#root')
+
+        let data = {
+            name: 'wjc',
+            message: '11212223'
+        }
+        let childNodes = tmpNode.childNodes
+        console.log(childNodes);
+        // 将数据放到模板当中
+        // 递归
+        function compiler(template, data) {
+            let childNodes = template.childNodes
+            for (let i = 0; i < childNodes.length; i++) {
+                let type = childNodes[i].nodeType; // 1 元素 3 文本节点
+                if (type === 3) {
+                    // console.log(childNodes[i]);
+                    // 文本节点 可以判断里面是否有{{}}插值
+                    let txt = childNodes[i].nodeValue
+                    // 正则匹配到一次{{}}就调用一次方法
+                    txt = txt.replace(rkuohao, (_, g) => {
+                        // console.log(_);
+                        // console.log(g);
+                        let key = g.trim() // 去掉空格
+                        let value = data[key]
+                        return value;
+                    })
+                    childNodes[i].nodeValue = txt
+                    // console.log(txt);
+                } else if (type === 1) {
+                    // 是否对子元素继续进行 判断有没有插值
+                    compiler(childNodes[i], data)
+                }
+            }
+        }
+        let generateNode = tmpNode.cloneNode(true); // 拷贝
+        console.log(tmpNode);
+        compiler(generateNode, data);
+        console.log(generateNode);// 渲染之后的模板
+        // console.log(root.parentNode);
+        root.parentNode.replaceChild(generateNode, root)
+
+
+        // 上面的思路有很大的问题
+        // vue使用的是虚拟dom
+        // 只考虑了单属性{{name}} 而vue中大量使用层级{{name.firstname}}
+        // 代码没有整合
+    </script>
+</body>
+
+</html>

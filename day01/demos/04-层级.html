@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据驱动层级</title>
+</head>
+
+<body>
+    <div id="root">
+        <h2>{{name.firstName}}</he>
+    </div>
+    <script>
+        // 用来解决层级问题 函数柯里化
+        function getValue(path) {
+            let paths = path.split('.')
+            return function getValueByPath(obj) {
+                let res = obj
+                let prop;
+                while (prop = paths.shift()) {
+                    res = res[prop]
+                }
+                return res;
+            }
+        }
+
+        class myVue {
+            constructor(options) {
+                console.log(options);
+                this._data = options.data
+                this._el = options.el
+                // 准备模板
+                this._templateDOM = document.querySelector(this._el);
+                this._parent = this._templateDOM.parentNode;
+            }
+            // 渲染工作
+            render() {
+                // 将模板结合数据加到HTML页面之中
+                let realHTMLDOM = this._templateDOM.cloneNode(true);
+                this.compiler(realHTMLDOM, this._data)
+                this.update(realHTMLDOM)
+            }
+
+            compiler(template, data) {
+                // 编译 将模板与数据结合 得到真正的dom元素
+                let rkuohao = /\{\{(.+?)\}\}/g;
+                let childNodes = template.childNodes
+                for (let i = 0; i < childNodes.length; i++) {
+                    let type = childNodes[i].nodeType; // 1 元素 3 文本节点
+                    if (type === 3) {
+                        // console.log(childNodes[i]);
+                        // 文本节点 可以判断里面是否有{{}}插值
+                        let txt = childNodes[i].nodeValue
+                        // 正则匹配到一次{{}}就调用一次方法
+                        txt = txt.replace(rkuohao, (_, g) => {
+                            // console.log(_);
+                            // console.log(g);
+                            let path = g.trim() // 去掉空格
+                            console.log(path);
+                            let value = getValue(path)(data)
+                            // debugger
+                            return value;
+                        })
+                        childNodes[i].nodeValue = txt
+                        // console.log(txt);
+                    } else if (type === 1) {
+                        // 是否对子元素继续进行 判断有没有插值
+                        this.compiler(childNodes[i], data)
+                    }
+                }
+            }
+
+            update(real) {
+                // 将DOM的元素放到页面之中
+                this._parent.replaceChild(real, document.querySelector('#root'))
+            }
+
+        }
+
+        let app = new myVue({
+            el: '#root',
+            data: {
+                name: {
+                    firstName: 'wang',
+                    lastName: 'junchao'
+                },
+                message: 'hello,word!!!'
+            }
+        })
+        // 调用myVue中的render方法
+        app.render()
+    </script>
+</body>
+
+</html>
