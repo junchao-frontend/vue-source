@@ -242,7 +242,8 @@
         set ( newVal ) {
           console.log( `设置 ${key} 属性为: ${newVal}` ); // 额外
 
-          value = newVal;
+          // value = newVal
+          value = reactify(newVal)
 
           // 模板刷新 ( 这现在是假的, 只是演示 )
           // vue 实例??? watcher 就不会有这个问题

@@ -8,20 +8,25 @@
 </head>
 
 <body>
-    <ul id="u">
-        <li id="li1" title="hello">Magci</li>
-        <li>J2EE</li>
-        <li>Haha!</li>
-    </ul>
-    <input type="button" value="Change" onClick="change();" />
-    <script language="JavaScript">
-        function change() {
-            undefined
-            var input = document.getElementById("li1");
-            alert(input.getAttribute("title"));
-            input.setAttribute("title", "mgc");
-            alert(input.getAttribute("title"));
-        }
+    <script>
+        // var obj = {
+        //     name: '11'
+        // }
+        // // console.log(obj);
+        // Object.defineProperty(obj,'name',{
+        //     enumerable: true,
+        //     configurable: true,
+        //     get () {
+        //         return '123'
+        //     },
+        //     set (a) {
+        //         obj.name = a
+        //         console.log(obj);
+        //     }
+        // })
+        // console.log(obj);
+        var arr = ['a','1','2','3']
+        console.log(arr.slice('a',1));
     </script>
 </body>
 
